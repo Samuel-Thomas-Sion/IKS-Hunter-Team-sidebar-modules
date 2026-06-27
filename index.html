@@ -2,7 +2,7 @@
 <html>
 <head>
     <style>
-        /* Force the background to be red */
+        /* Force the background to be invisible */
         html, body {
             background: #5a0000 !important;
             background-color: #5a0000 !important;
@@ -76,6 +76,52 @@
             align-items: center;
             border-bottom: 1px solid rgba(255, 0, 0, 0.3);
             position: relative;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        
+        .header-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #ff0000 0%, #ff4d4d 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 16px;
+            box-shadow: 
+                0 0 20px rgba(255, 0, 0, 0.5),
+                0 4px 8px rgba(0, 0, 0, 0.3);
+            animation: pulse-glow 3s ease-in-out infinite;
+            position: relative;
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { 
+                box-shadow: 
+                    0 0 20px rgba(255, 0, 0, 0.5),
+                    0 4px 8px rgba(0, 0, 0, 0.3);
+            }
+            50% { 
+                box-shadow: 
+                    0 0 30px rgba(255, 0, 0, 0.8),
+                    0 0 50px rgba(255, 0, 0, 0.4),
+                    0 4px 8px rgba(0, 0, 0, 0.3);
+            }
+        }
+        
+        .member-count {
+            background: linear-gradient(135deg, rgba(255, 0, 0, 0.2) 0%, rgba(139, 0, 0, 0.3) 100%);
+            color: #ffe0e0;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 0, 0, 0.4);
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.2);
+            margin-left: auto;
         }
         
         .header-text {
@@ -260,6 +306,10 @@
 <body>
     <div class="vortex-card">
         <div class="header-section">
+            <div id="member-count-container" style="display: none; width: 100%; align-items: center;">
+                <div class="header-text" style="font-size: 11px;">Member Count</div>
+                <div id="member-count-val" class="member-count"></div>
+            </div>
             <div class="header-text">New Members</div>
         </div>
         
@@ -286,20 +336,46 @@
 
         async function load() {
             const list = document.getElementById('list');
+            const countContainer = document.getElementById('member-count-container');
+            const countVal = document.getElementById('member-count-val');
             const headers = { 'User-Agent': 'VortexSidebar/2.0' };
             const defaultPawn = 'https://www.chess.com/bundles/web/images/user-image.007dad08.svg';
 
             try {
+                // Fetch overall club info to get the total member count
+                const clubRes = await fetch('https://api.chess.com/pub/club/hunter-team', { headers });
+                const clubData = await clubRes.json();
+                
+                let totalMembers = null;
+                if (clubData && clubData.members_count) {
+                    totalMembers = clubData.members_count;
+                }
+
+                // Fetch the recent members
                 const r = await fetch('https://api.chess.com/pub/club/hunter-team/members', { headers });
                 const d = await r.json();
                 
                 const allMembers = [...(d.weekly || []), ...(d.monthly || [])];
+                const allTimeMembers = d.all_time || [];
+                
+                // Fallback to calculating from members list if club API doesn't provide it
+                if (!totalMembers) {
+                    totalMembers = allMembers.length + allTimeMembers.length;
+                }
+
+                // Display the member count
+                if (totalMembers !== null) {
+                    countVal.innerText = totalMembers.toLocaleString();
+                    countContainer.style.display = 'flex';
+                }
+                
                 const top3 = allMembers
                     .sort((a, b) => b.joined - a.joined)
                     .slice(0, 3);
 
                 list.innerHTML = '';
                 
+                // Use Promise.all to fetch all member data, then render in order
                 const memberPromises = top3.map(m => 
                     fetch(`https://api.chess.com/pub/player/${m.username}`, { headers })
                         .then(pR => pR.json())
@@ -320,6 +396,7 @@
 
                 const members = await Promise.all(memberPromises);
                 
+                // Render members in correct order (1st, 2nd, 3rd)
                 members.forEach((member, index) => {
                     const joinedDate = new Date(member.joined * 1000);
                     
