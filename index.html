@@ -2,10 +2,10 @@
 <html>
 <head>
     <style>
-        /* Force the background to be invisible */
+        /* Force the background to be red */
         html, body {
-            background: transparent !important;
-            background-color: transparent !important;
+            background: #5a0000 !important;
+            background-color: #5a0000 !important;
             margin: 0;
             padding: 0;
             overflow: hidden;
@@ -13,6 +13,10 @@
         
         body { 
             font-family: 'Courier New', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
         
         .vortex-card {
@@ -72,37 +76,6 @@
             align-items: center;
             border-bottom: 1px solid rgba(255, 0, 0, 0.3);
             position: relative;
-        }
-        
-        .header-icon {
-            width: 32px;
-            height: 32px;
-            background: linear-gradient(135deg, #ff0000 0%, #ff4d4d 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 12px;
-            font-size: 16px;
-            box-shadow: 
-                0 0 20px rgba(255, 0, 0, 0.5),
-                0 4px 8px rgba(0, 0, 0, 0.3);
-            animation: pulse-glow 3s ease-in-out infinite;
-            position: relative;
-        }
-        
-        @keyframes pulse-glow {
-            0%, 100% { 
-                box-shadow: 
-                    0 0 20px rgba(255, 0, 0, 0.5),
-                    0 4px 8px rgba(0, 0, 0, 0.3);
-            }
-            50% { 
-                box-shadow: 
-                    0 0 30px rgba(255, 0, 0, 0.8),
-                    0 0 50px rgba(255, 0, 0, 0.4),
-                    0 4px 8px rgba(0, 0, 0, 0.3);
-            }
         }
         
         .header-text {
@@ -327,7 +300,6 @@
 
                 list.innerHTML = '';
                 
-                // Use Promise.all to fetch all member data, then render in order
                 const memberPromises = top3.map(m => 
                     fetch(`https://api.chess.com/pub/player/${m.username}`, { headers })
                         .then(pR => pR.json())
@@ -348,7 +320,6 @@
 
                 const members = await Promise.all(memberPromises);
                 
-                // Render members in correct order (1st, 2nd, 3rd)
                 members.forEach((member, index) => {
                     const joinedDate = new Date(member.joined * 1000);
                     
